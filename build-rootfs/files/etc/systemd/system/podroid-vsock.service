@@ -4,7 +4,6 @@
 Description=Podroid vsock control + port forwarding agent
 After=podroid-bootstrap.service
 Before=podroid-ready.service
-ConditionPathExists=!proc/cmdline
 
 [Service]
 Type=simple

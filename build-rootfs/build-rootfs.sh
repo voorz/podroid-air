@@ -62,6 +62,10 @@ for svc in podroid-migrate podroid-bootstrap podroid-network podroid-resize \
         "$ROOTFS/etc/systemd/system/multi-user.target.wants/${svc}"
 done
 
+# Enable openssh-server (unit shipped at /lib/systemd/system/ssh.service)
+ln -sf /lib/systemd/system/ssh.service \
+    "$ROOTFS/etc/systemd/system/multi-user.target.wants/ssh.service"
+
 # ── Disable services we don't need in the VM ─────────────────────────────
 # These are either handled by initramfs or are noise in a VM.
 for svc in apt-daily.timer apt-daily-upgrade.timer \
