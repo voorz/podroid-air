@@ -38,18 +38,7 @@ WORKDIR /work
 # --include: packages needed at first boot, installed during debootstrap
 #   so the rootfs is usable before the overlay is applied.
 RUN debootstrap --arch=${DEBIAN_ARCH} --variant=minbase \
-    --include=systemd,systemd-sysv,dbus, \
-    bash,coreutils,util-linux,iproute2,iputils-ping, \
-    openssh-server,openssh-client,curl,ca-certificates, \
-    podman,docker.io,containerd, \
-    iptables,nftables,bridge-utils, \
-    crun,uidmap,fuse-overlayfs,slirp4netns, \
-    aardvark-dns,netavark, \
-    sudo,less,vim-tiny,gzip,xz-utils, \
-    tigervnc-standalone-server,tigervnc-common, \
-    pulseaudio,pulseaudio-utils, \
-    fonts-dejavu-core,fonts-misc-fixed, \
-    kmod,e2fsprogs, \
+    --include=systemd,systemd-sysv,dbus,bash,coreutils,util-linux,iproute2,iputils-ping,openssh-server,openssh-client,curl,ca-certificates,podman,docker.io,containerd,iptables,nftables,bridge-utils,crun,uidmap,fuse-overlayfs,slirp4netns,aardvark-dns,netavark,sudo,less,vim-tiny,gzip,xz-utils,tigervnc-standalone-server,tigervnc-common,pulseaudio,pulseaudio-utils,fonts-dejavu-core,xfonts-terminus,kmod,e2fsprogs \
     bookworm rootfs \
     http://deb.debian.org/debian
 
