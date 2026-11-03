@@ -8,14 +8,14 @@
 
 A real Debian 12 (Bookworm) Linux VM with its own kernel - not a chroot or proot trick - so **Podman, Docker and LXC** behave exactly like they do on a server.
 
-[![Release](https://img.shields.io/github/v/release/ExTV/Podroid?include_prereleases&style=flat-square&label=release&color=blue)](https://github.com/ExTV/Podroid/releases)
-[![Downloads](https://img.shields.io/github/downloads/ExTV/Podroid/total?style=flat-square&color=brightgreen)](https://github.com/ExTV/Podroid/releases)
-[![Stars](https://img.shields.io/github/stars/ExTV/Podroid?style=flat-square&color=yellow)](https://github.com/ExTV/Podroid/stargazers)
-[![License](https://img.shields.io/github/license/ExTV/Podroid?style=flat-square)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/voorz/podroid-air?include_prereleases&style=flat-square&label=release&color=blue)](https://github.com/voorz/podroid-air/releases)
+[![Downloads](https://img.shields.io/github/downloads/voorz/podroid-air/total?style=flat-square&color=brightgreen)](https://github.com/voorz/podroid-air/releases)
+[![Stars](https://img.shields.io/github/stars/voorz/podroid-air?style=flat-square&color=yellow)](https://github.com/voorz/podroid-air/stargazers)
+[![License](https://img.shields.io/github/license/voorz/podroid-air?style=flat-square)](LICENSE)
 ![Android 8+](https://img.shields.io/badge/Android-8%2B-3DDC84?style=flat-square&logo=android&logoColor=white)
 ![arm64](https://img.shields.io/badge/arch-arm64-orange?style=flat-square)
 
-[**Website**](https://extv.github.io/Podroid/) · [**Documentation**](https://extv.github.io/Podroid/guide/) · [**Download APK**](https://github.com/ExTV/Podroid/releases/latest)
+[**Website**](https://extv.github.io/Podroid/) · [**Documentation**](https://extv.github.io/Podroid/guide/) · [**Download APK**](https://github.com/voorz/podroid-air/releases/latest)
 
 <table>
   <tr>
@@ -40,7 +40,7 @@ A real Debian 12 (Bookworm) Linux VM with its own kernel - not a chroot or proot
 
 ## Quick start
 
-1. [Download the APK](https://github.com/ExTV/Podroid/releases/latest) and install it.
+1. [Download the APK](https://github.com/voorz/podroid-air/releases/latest) and install it.
 2. Tap **Start VM**, wait for **Ready!**, open the terminal.
 
 ```sh
@@ -54,7 +54,7 @@ curl http://<phone-ip>:8080
 podroid-forward clean                 # remove every rule you added, in one go
 
 # SSH in from your laptop (enable SSH in the setup wizard or Settings)
-ssh root@<phone-ip> -p 9922        # password: podroid
+ssh root@<phone-ip> -p 9922        # password: root
 
 # read this documentation with no network connection
 podroid-forward add 9980 9980 tcp     # forward the docs port to the phone
@@ -66,8 +66,8 @@ Setup, the two backends, networking, the X11 viewer and troubleshooting all live
 ## Build
 
 ```sh
-git clone https://github.com/ExTV/Podroid.git
-cd Podroid
+git clone https://github.com/voorz/podroid-air.git
+cd podroid-air
 ./build-all.sh all     # kernel, rootfs, QEMU and APK (needs Docker + Android SDK/NDK)
 ```
 
@@ -78,7 +78,7 @@ Per-component builds and toolchain details: [CONTRIBUTING.md](CONTRIBUTING.md).
 Contributions of every size are welcome: bug reports, kernel-config tweaks, new themes, UI polish, X11 input fixes, anything.
 
 - **Pull requests:** read [CONTRIBUTING.md](CONTRIBUTING.md) first. Keep changes scoped, run `./build-all.sh test` before pushing, and explain *why* in the PR description.
-- **Bug reports:** [open an issue](https://github.com/ExTV/Podroid/issues/new) with your device and Android version, a short repro, and the diagnostic log (**Settings → Export Diagnostic Log** in the app).
+- **Bug reports:** [open an issue](https://github.com/voorz/podroid-air/issues/new) with your device and Android version, a short repro, and the diagnostic log (**Settings → Export Diagnostic Log** in the app).
 
 ## Related projects
 
@@ -91,9 +91,10 @@ Contributions of every size are welcome: bug reports, kernel-config tweaks, new 
 | [QEMU](https://www.qemu.org)                   | Machine emulation |
 | [Termux](https://github.com/termux/termux-app) | Terminal emulator engine |
 | [Debian](https://www.debian.org)             | The guest distribution |
+| [ExTV/Podroid](https://github.com/ExTV/Podroid) | Original project |
 
 Full list in [CREDITS.md](CREDITS.md).
 
 ## License
 
-[GPLv2](LICENSE). If Podroid is useful to you, a [star](https://github.com/ExTV/Podroid/stargazers) helps other people find it.
+[GPLv2](LICENSE). If Podroid is useful to you, a [star](https://github.com/voorz/podroid-air/stargazers) helps other people find it.
