@@ -23,9 +23,9 @@ echo "%sudo ALL=(ALL) ALL" > "$ROOTFS/etc/sudoers.d/podroid"
 chmod 0440 "$ROOTFS/etc/sudoers.d/podroid"
 
 # ── Root password ────────────────────────────────────────────────────────
-# Set root password to "podroid" (pre-hashed with openssl).
+# Set root password to "root" (pre-hashed with openssl).
 # We write the SHA-512 hash directly into /etc/shadow.
-ROOT_HASH=$(openssl passwd -6 podroid)
+ROOT_HASH=$(openssl passwd -6 root)
 sed -i "s|^root:[^:]*:|root:${ROOT_HASH}:|" "$ROOTFS/etc/shadow"
 
 # ── Strip docs/man/locale to shrink squashfs ─────────────────────────────
@@ -168,7 +168,7 @@ cat > "$ROOTFS/etc/issue" <<'EOF'
 Welcome to Podroid (Debian 12 Bookworm)
 Kernel \r on \m (\l)
 
-  Default login:  root  /  podroid
+  Default login:  root  /  root
   Change root password:    passwd
   Create a regular user:   adduser <name>
                            (add to sudo group for sudo access)
