@@ -1,0 +1,18 @@
+# podroid-migrate.service
+# Runs versioned upgrade scripts once, before the rest of Podroid bringup.
+[Unit]
+Description=Podroid system migrations (versioned upgrade scripts)
+DefaultDependencies=no
+After=local-fs.target
+Before=podroid-bootstrap.service sysinit.target
+ConditionPathExists=/etc/podroid/system-version
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/podroid-migrate
+RemainAfterExit=yes
+StandardOutput=console
+StandardError=console
+
+[Install]
+WantedBy=multi-user.target

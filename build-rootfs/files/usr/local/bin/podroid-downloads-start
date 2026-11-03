@@ -1,0 +1,15 @@
+#!/bin/sh
+# Podroid AVF Downloads share startup wrapper (AVF only).
+# Invoked by podroid-downloads.service (systemd).
+set -eu
+
+# AVF-only: QEMU gets Downloads via virtio-9p in podroid-bootstrap.
+if ! grep -q 'podroid\.backend=avf' /proc/cmdline 2>/dev/null; then
+    echo "Not an AVF boot - skipping podroid-downloads" > /dev/console
+    systemctl mask podroid-downloads.service 2>/dev/null || true
+    exit 0
+fi
+
+mkdir -p /mnt/downloads 2>/dev/null
+echo "Starting Downloads 9p rendezvous" > /dev/console
+exec /usr/local/bin/podroid-vsock-agent downloads-9p

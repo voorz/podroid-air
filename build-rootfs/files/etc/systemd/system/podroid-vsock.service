@@ -1,0 +1,18 @@
+# podroid-vsock.service
+# Vsock control + port forwarding agent (AVF only).
+[Unit]
+Description=Podroid vsock control + port forwarding agent
+After=podroid-bootstrap.service
+Before=podroid-ready.service
+ConditionPathExists=!proc/cmdline
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/podroid-vsock-start
+ExecStop=/bin/kill -TERM $MAINPID
+PIDFile=/run/podroid-vsock-agent.pid
+StandardOutput=console
+StandardError=console
+
+[Install]
+WantedBy=multi-user.target

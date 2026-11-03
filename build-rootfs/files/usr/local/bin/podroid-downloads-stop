@@ -1,0 +1,9 @@
+#!/bin/sh
+# Podroid Downloads share stop handler.
+set -eu
+if [ -f /run/podroid-downloads.pid ]; then
+    kill "$(cat /run/podroid-downloads.pid)" 2>/dev/null || true
+    rm -f /run/podroid-downloads.pid
+fi
+umount /mnt/downloads 2>/dev/null || true
+exit 0

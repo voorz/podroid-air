@@ -3,7 +3,7 @@
   Podroid - Rootless Podman for Android
   Copyright (C) 2024-2026 Podroid contributors
 
-  A headless AArch64 QEMU micro-VM running Alpine Linux with Podman,
+  A headless AArch64 QEMU micro-VM running Debian Linux with Podman,
   exposed via ttyd web terminal.
 
   This program is free software; you can redistribute it and/or modify

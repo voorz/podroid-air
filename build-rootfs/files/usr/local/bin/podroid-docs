@@ -18,5 +18,7 @@ fi
 echo "Serving the Podroid docs at http://127.0.0.1:9980 (Ctrl-C to stop)"
 echo "From the phone: podroid-forward add 9980 9980 tcp, then open http://127.0.0.1:9980"
 
-# Alpine ships httpd in busybox-extras, not in the base busybox applet set.
-exec busybox-extras httpd -f -p 9980 -h "$DOCROOT"
+# Debian doesn't ship busybox httpd; use python3's built-in HTTP server.
+# python3 is installed by default in the Debian minbase + --include list.
+cd "$DOCROOT"
+exec python3 -m http.server 9980

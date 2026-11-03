@@ -4,12 +4,12 @@ Guidance for Claude Code (and any AI assistant or new contributor) working in th
 
 ## What Is This
 
-Podroid is an Android app that runs a real **Alpine 3.24** Linux VM on stock Android 8+ (arm64) to provide rootless **Podman / Docker / LXC** containers and an in-app **X11 desktop** - no root, no custom recovery.
+Podroid is an Android app that runs a real **Debian 12 (Bookworm)** Linux VM on stock Android 8+ (arm64) to provide rootless **Podman / Docker / LXC** containers and an in-app **X11 desktop** - no root, no custom recovery.
 
 - **Two interchangeable VM backends** behind one interface (`VmEngine`):
   - **QEMU (TCG)** - software emulation, the default, needs no special permission.
   - **AVF (pKVM)** - hardware-accelerated via the Android Virtualization Framework on Pixel-class devices, after a one-time `pm grant`.
-- The guest is a standard Alpine root with **OpenRC as PID 1**. System services live in `/etc/init.d/podroid-*` on a read-only squashfs; a persistent ext4 overlay captures user changes (`apk add`, `rc-update add`).
+- The guest is a standard Debian root with **systemd as PID 1**. System services live in `/etc/systemd/system/podroid-*.service` on a read-only squashfs; a persistent ext4 overlay captures user changes (`apt install`, `systemctl enable`).
 - An embedded **Termux-based terminal**, an **X11/VNC viewer** (Xvnc + PulseAudio), and a **guest-to-Android bridge** (`podroid-notify` / `podroid-forward`) round it out.
 
 ## Key Facts
@@ -20,7 +20,7 @@ Podroid is an Android app that runs a real **Alpine 3.24** Linux VM on stock And
 | Version | `versionName` / `versionCode` in `app/build.gradle.kts` |
 | Min / target SDK | 26 (Android 8) / 36 |
 | Architecture | arm64 (`aarch64`) only |
-| Guest | Alpine 3.24 squashfs + persistent ext4 overlay, OpenRC PID 1 |
+| Guest | Debian 12 (Bookworm) squashfs + persistent ext4 overlay, systemd PID 1 |
 | Kernel | custom Linux, version pinned by `podroidKernelVersion` in `gradle.properties` |
 | QEMU | version pinned by `podroidQemuVersion` in `gradle.properties` |
 | UI | Jetpack Compose + Material 3, single Activity |
@@ -37,7 +37,7 @@ All native/VM components are coordinated by `build-all.sh` (Docker-cached):
 ```bash
 ./build-all.sh kernel      # custom kernel only (podroid_kernel.config)
 ./build-all.sh initramfs   # kernel + minimal initramfs
-./build-all.sh rootfs      # Alpine squashfs -> app/src/main/assets/alpine-rootfs.squashfs
+./build-all.sh rootfs      # Debian squashfs -> app/src/main/assets/debian-rootfs.squashfs
 ./build-all.sh qemu        # QEMU + native helpers via Docker (slow first time)
 ./build-all.sh apk         # Android APK via Gradle
 ./build-all.sh all         # everything
@@ -96,8 +96,8 @@ On **AVF** there is no QMP and no PL011: the console is captured via `ConsoleFan
 
 1. The engine launches the VM and starts the boot monitor (`QemuBootMonitor.kt` for QEMU; the console stream for AVF). `BootStageDetector.kt` scans the rolling console buffer (last ~1KB, not per-`read()` chunk - fast devices split markers like `Ready!` across reads).
 2. **`init-podroid`** (initramfs, ~45 lines): mounts the persistent ext4 (`/dev/vda` → upper) and the read-only squashfs (`/dev/vdb` → lower), stacks an overlayfs, moves the mounts into the new root, and `switch_root`s into `/sbin/init` (busybox).
-3. Busybox `/sbin/init` reads `/etc/inittab` and starts **OpenRC** (runlevels are pre-symlinked at build time - chroot-into-aarch64 doesn't work on an x86_64 builder).
-4. OpenRC services on the squashfs do all system bringup:
+3. systemd `/sbin/init` reads the default target and starts **systemd** (services are pre-symlinked at build time - chroot-into-aarch64 doesn't work on an x86_64 builder).
+4. systemd services on the squashfs do all system bringup:
    - `podroid-bootstrap` - kernel modules, cgroup v2, devpts/shm/mqueue, sysctl, ZRAM swap, `mount --make-rshared /`, container dirs.
    - `podroid-network` - eth0 up, addressing, default route, `/etc/resolv.conf`.
    - `podroid-resize` - reads `RESIZE rows cols` from `/dev/hvc1`, `stty`s `/dev/hvc0`.
@@ -168,7 +168,7 @@ Single-activity Compose app: `ui/navigation/NavGraph.kt` routes `setup → home 
 │       │   ├── x11/                      # X11/VNC viewer engine
 │       │   └── ui/                       # Compose: navigation, theme, screens/{setup,home,terminal,settings,x11,status,backup}, components
 │       ├── res/values, res/values-zh/    # strings (EN + Chinese)
-│       ├── assets/                       # vmlinuz-virt, initrd.img, alpine-rootfs.squashfs (all gitignored, built locally),
+│       ├── assets/                       # vmlinuz-virt, initrd.img, debian-rootfs.squashfs (all gitignored, built locally),
 │       │                                 # qemu/, colors/ (122), fonts/ (13), ui-fonts/
 │       └── jniLibs/arm64-v8a/            # native executables (see below)
 ├── terminal-view/, terminal-emulator/   # vendored Termux fork (local Gradle modules)
@@ -182,7 +182,7 @@ Single-activity Compose app: `ui/navigation/NavGraph.kt` routes `setup → home 
 │   ├── Dockerfile.rootfs, build-rootfs.sh
 │   ├── vsock-agent/                     # podroid-vsock-agent.c (AVF control/forward agent)
 │   ├── host-bridge/                     # podroid-hostd.c (guest->Android bridge daemon + CLIs)
-│   └── files/etc/                       # OpenRC services + configs baked into the squashfs
+│   └── files/etc/                       # systemd services + configs baked into the squashfs
 ├── build-all.sh, gradle.properties, build.gradle.kts, settings.gradle.kts
 └── README.md, CONTRIBUTING.md, CREDITS.md
 ```
@@ -205,13 +205,13 @@ The terminal emulator JNI is built from the vendored `terminal-emulator` module 
 - `-serial unix:serial.sock` (boot log) + a `virtio-serial-pci` bus carrying three virtconsoles: `terminal.sock` (hvc0), `ctrl.sock` (hvc1), `host.sock` (hvc2, the host bridge - **order matters**, the guest expects host bridge on hvc2).
 - `-qmp unix:qmp.sock` for runtime port forwards + USB.
 - RAM, CPU count, and user-editable extras (`-cpu`, `-accel`, RNG, etc.) from `SettingsRepository`.
-- Two virtio block devices: `/dev/vda` ← `storage.img` (writable ext4 overlay upper, resized on first boot), `/dev/vdb` ← `alpine-rootfs.squashfs` (read-only zstd lower).
+- Two virtio block devices: `/dev/vda` ← `storage.img` (writable ext4 overlay upper, resized on first boot), `/dev/vdb` ← `debian-rootfs.squashfs` (read-only zstd lower).
 - SLIRP networking; `-device qemu-xhci` when USB passthrough is enabled.
 
 ## Build pipelines
 
 - **`Dockerfile`** - custom Linux kernel (arm64 defconfig + `podroid_kernel.config` modules + `forced_builtin.config` forcing overlayfs / netfilter / bridge / veth / tun / FUSE / IPv6 etc. to `=y`) and QEMU cross-compiled against the NDK. A build-time check greps the resolved `.config` and **fails the build** if any critical option isn't `=y` (guards against silent Kconfig demotion from unmet tristate deps). QEMU needs `--enable-libusb` (for passthrough) and a few Android/Bionic patches; `build-all.sh qemu` may need `docker build --network=host`.
-- **`build-rootfs/Dockerfile.rootfs`** - fetches the Alpine minirootfs, runs `build-rootfs.sh` (apk-installs alpine-base + openrc + podman + crun + fuse-overlayfs + docker + lxc + dropbear + iptables/nftables + bridge-utils, sets root password `podroid`, seals file caps on `newuidmap`/`newgidmap`, copies the OpenRC services and the cross-compiled `podroid-vsock-agent` + `podroid-hostd`, wires runlevels via direct symlinks), then `mksquashfs -comp zstd` (kernel ships `CONFIG_SQUASHFS_ZSTD=y`).
+- **`build-rootfs/Dockerfile.rootfs`** - runs `debootstrap` for a Debian bookworm minbase, runs `build-rootfs.sh` (apt-installs systemd + podman + crun + fuse-overlayfs + docker + lxc + openssh + iptables/nftables + bridge-utils, sets root password `podroid`, seals file caps on `newuidmap`/`newgidmap`, copies the systemd services and the cross-compiled `podroid-vsock-agent` + `podroid-hostd`, wires units via direct symlinks), then `mksquashfs -comp zstd` (kernel ships `CONFIG_SQUASHFS_ZSTD=y`).
 
 ## Performance tuning (TCG path; KVM is impossible without root)
 
@@ -240,15 +240,15 @@ The guest system layer updates across app versions with **no VM reset and no dat
 - **Plain overlay (never re-add metacopy/index/redirect).** `init-podroid` mounts the rootfs overlay as `lowerdir=/mnt/lower,upperdir=/mnt/persist/upper,workdir=/mnt/persist/work` only. Plain overlayfs tolerates a swapped lower, so a new squashfs (re-extracted by `PodroidApplication` on every update) goes live on the next boot while the persistent upper is preserved. **Do not re-add `metacopy=on`/`index=on`/`redirect_dir=on`** - they bind the upper to a specific lower and reintroduce the corruption-on-update bug (the whole reason resets used to be needed).
 - **Version anchor.** The squashfs ships `/etc/podroid/system-version` (baked from `versionCode` by `build-all.sh` -> `Dockerfile.rootfs` ARG -> `build-rootfs.sh`). The last-applied version persists at `/mnt/persist/.podroid/applied-version`.
 - **One-time legacy normalization.** `init-podroid` runs `podroid-overlay-normalize` (shipped in the squashfs, invoked via `/mnt/lower`, before the overlay is stacked) once per device (guarded by `/mnt/persist/.podroid/normalized`) to strip pre-existing `metacopy`/`redirect`/`index` state from uppers created by the old metacopy overlay. No-op on fresh/normalized uppers.
-- **Imperative hooks.** `podroid-migrate` (OpenRC, runs `before podroid-bootstrap`) executes `/etc/podroid/migrations/<v>.sh` for `applied < v <= system-version` in order, then advances `applied-version` atomically. **To ship a fixup in a new release** (e.g. enable a newly-added service): add `build-rootfs/files/etc/podroid/migrations/<versionCode>.sh`, idempotent, install it in `build-rootfs.sh`. Pure file additions/changes need NO script - the overlay union surfaces them.
+- **Imperative hooks.** `podroid-migrate` (systemd, runs `before podroid-bootstrap`) executes `/etc/podroid/migrations/<v>.sh` for `applied < v <= system-version` in order, then advances `applied-version` atomically. **To ship a fixup in a new release** (e.g. enable a newly-added service): add `build-rootfs/files/etc/podroid/migrations/<versionCode>.sh`, idempotent, install it in `build-rootfs.sh`. Pure file additions/changes need NO script - the overlay union surfaces them.
 - **Reliability:** the marker advances only after migration completes (crash -> idempotent re-run); nothing auto-wipes `/mnt/persist`; `init-podroid` keeps its `FATAL -> exec sh` recovery shell.
 
 ## Common tasks
 
 - **Kotlin/UI change** → `./gradlew assembleDebug && ./gradlew installDebug`.
-- **OpenRC service / package list / guest CLI change** → edit under `build-rootfs/`, `./build-all.sh rootfs`, rebuild APK. New/changed system files go live on the **next VM boot** with no reset (the plain-overlay union surfaces them; see "VM migration / upgrades"). The exception is a path the user already modified - it lives in the persistent upper and keeps the user's version until removed, so use a `/etc/podroid/migrations/<v>.sh` script for that case.
+- **systemd service / package list / guest CLI change** → edit under `build-rootfs/`, `./build-all.sh rootfs`, rebuild APK. New/changed system files go live on the **next VM boot** with no reset (the plain-overlay union surfaces them; see "VM migration / upgrades"). The exception is a path the user already modified - it lives in the persistent upper and keeps the user's version until removed, so use a `/etc/podroid/migrations/<v>.sh` script for that case.
 - **`init-podroid` change** → `./build-all.sh initramfs`, rebuild APK.
-- **New boot stage** → emit the marker in the right OpenRC service + match it in `BootStageDetector`.
+- **New boot stage** → emit the marker in the right systemd service + match it in `BootStageDetector`.
 - **New setting** → add a DataStore key + Flow in `SettingsRepository`, UI in `SettingsScreen`, setter in `SettingsViewModel`, and plumb into `VmConfig`/`buildCommand()` if it affects the VM.
 - **New user-facing string** → add to `res/values` AND `res/values-zh`, use `stringResource`.
 - **Verify before "done"**: compile, run `:app:testDebugUnitTest`, and for behavior changes install and walk the flow on a device (unit tests don't catch DI/graph or backend-specific issues).

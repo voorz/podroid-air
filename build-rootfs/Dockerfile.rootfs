@@ -1,9 +1,11 @@
 # build-rootfs/Dockerfile.rootfs
 
-# ── Stage 1: cross-compile podroid-vsock-agent (musl-static aarch64) ────────
+# ── Stage 1: cross-compile podroid-vsock-agent (static aarch64) ──────────
 # Uses qemu-user under the hood — no separate cross-toolchain needed.
-FROM --platform=linux/arm64 alpine:3.24 AS vsock-builder
-RUN apk add --no-cache musl-dev gcc make linux-headers
+FROM --platform=linux/arm64 debian:bookworm AS vsock-builder
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc make libc6-dev linux-libc-dev \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /work
 COPY vsock-agent /work/vsock-agent
 RUN cd /work/vsock-agent && make CC=gcc
@@ -12,30 +14,50 @@ RUN cd /work/host-bridge && make CC=gcc
 COPY overlay-normalize /work/overlay-normalize
 RUN cd /work/overlay-normalize && make CC=gcc
 
-# ── Stage 2: build the Alpine rootfs squashfs ───────────────────────────────
-FROM alpine:3.24 AS builder
+# ── Stage 2: build the Debian rootfs squashfs ─────────────────────────────
+FROM debian:bookworm AS builder
 
-ARG ALPINE_RELEASE=3.24.2
-ARG ALPINE_ARCH=aarch64
+ARG DEBIAN_ARCH=arm64
+ARG SYSTEM_VERSION=0
 
-RUN apk add --no-cache curl squashfs-tools tar openssl libcap-utils
+ENV DEBIAN_FRONTEND=noninteractive
+ENV SYSTEM_VERSION=${SYSTEM_VERSION}
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    debootstrap \
+    squashfs-tools \
+    openssl \
+    libcap2-bin \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work
-RUN curl -L -o minirootfs.tar.gz \
-    "https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_RELEASE%.*}/releases/${ALPINE_ARCH}/alpine-minirootfs-${ALPINE_RELEASE}-${ALPINE_ARCH}.tar.gz" \
- && mkdir rootfs \
- && tar -xzf minirootfs.tar.gz -C rootfs \
- && rm minirootfs.tar.gz
+
+# Bootstrap a minimal Debian bookworm rootfs for the target arch.
+# --variant=minbase: smallest functional root (no docs, no manpages).
+# --include: packages needed at first boot, installed during debootstrap
+#   so the rootfs is usable before the overlay is applied.
+RUN debootstrap --arch=${DEBIAN_ARCH} --variant=minbase \
+    --include=systemd,systemd-sysv,dbus, \
+    bash,coreutils,util-linux,iproute2,iputils-ping, \
+    openssh-server,openssh-client,curl,ca-certificates, \
+    podman,docker.io,containerd, \
+    iptables,nftables,bridge-utils, \
+    crun,uidmap,fuse-overlayfs,slirp4netns, \
+    aardvark-dns,netavark, \
+    sudo,less,vim-tiny,gzip,xz-utils, \
+    tigervnc-standalone-server,tigervnc-common, \
+    pulseaudio,pulseaudio-utils, \
+    fonts-dejavu-core,fonts-misc-fixed, \
+    kmod,e2fsprogs, \
+    bookworm rootfs \
+    http://deb.debian.org/debian
 
 # Pull in the vsock-agent binary built in stage 1.
 COPY --from=vsock-builder /work/vsock-agent/podroid-vsock-agent /work/rootfs/usr/local/bin/podroid-vsock-agent
 COPY --from=vsock-builder /work/host-bridge/podroid-hostd /work/rootfs/usr/local/bin/podroid-hostd
 COPY --from=vsock-builder /work/overlay-normalize/podroid-overlay-normalize /work/rootfs/usr/local/bin/podroid-overlay-normalize
 
-ARG SYSTEM_VERSION=0
-ENV SYSTEM_VERSION=${SYSTEM_VERSION}
-
-ENV ALPINE_VERSION=${ALPINE_RELEASE}
 COPY files /work/files
 # Staged by build_rootfs() in build-all.sh (docs/ lives outside this build
 # context); served in-guest by /usr/local/bin/podroid-docs.
@@ -43,10 +65,10 @@ COPY docs-guide /work/docs-guide
 COPY build-rootfs.sh /work/build-rootfs.sh
 RUN chmod +x /work/build-rootfs.sh && /work/build-rootfs.sh
 
-RUN mksquashfs /work/rootfs /work/alpine-rootfs.squashfs \
+RUN mksquashfs /work/rootfs /work/debian-rootfs.squashfs \
     -comp zstd -Xcompression-level 19 -all-root -noappend
 # (No -no-xattrs: rootless podman's newuidmap/newgidmap need their
 # file capabilities preserved; they're stored as security.capability xattr.)
 
 FROM scratch AS export
-COPY --from=builder /work/alpine-rootfs.squashfs /alpine-rootfs.squashfs
+COPY --from=builder /work/debian-rootfs.squashfs /debian-rootfs.squashfs

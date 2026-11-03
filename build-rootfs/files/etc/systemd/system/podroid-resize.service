@@ -1,0 +1,18 @@
+# podroid-resize.service
+# Terminal resize daemon: reads "RESIZE rows cols" from /dev/hvc1 and
+# applies them to /dev/hvc0 via stty.
+[Unit]
+Description=Podroid terminal resize daemon (hvc1 -> stty hvc0)
+After=podroid-bootstrap.service
+Before=podroid-ready.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/podroid-resize
+Restart=on-failure
+RestartSec=1
+StandardOutput=console
+StandardError=console
+
+[Install]
+WantedBy=multi-user.target

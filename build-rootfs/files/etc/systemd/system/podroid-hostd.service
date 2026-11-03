@@ -1,0 +1,18 @@
+# podroid-hostd.service
+# Guest -> Android host bridge daemon (notify/forward).
+[Unit]
+Description=Podroid guest -> Android host bridge (notify/forward)
+After=podroid-bootstrap.service
+Before=podroid-ready.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/podroid-hostd
+PIDFile=/run/podroid-hostd.pid
+StandardOutput=file:/var/log/podroid-hostd.log
+StandardError=file:/var/log/podroid-hostd.log
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

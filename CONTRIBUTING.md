@@ -26,7 +26,7 @@ You will need:
 ```sh
 ./build-all.sh kernel       # custom Linux kernel (~5-10 min, Docker-cached)
 ./build-all.sh initramfs    # kernel + minimal initramfs
-./build-all.sh rootfs       # Alpine squashfs (~30 s, Docker-cached)
+./build-all.sh rootfs       # Debian squashfs (~30 s, Docker-cached)
 ./build-all.sh qemu         # QEMU + podroid-bridge (~30 min first run)
 ./build-all.sh apk          # Android APK via Gradle
 ./build-all.sh all          # everything, in the order above
@@ -40,7 +40,7 @@ You will need:
 |---|---|---|
 | `kernel` | `vmlinuz-virt` | `app/src/main/assets/vmlinuz-virt` |
 | `initramfs` | `vmlinuz-virt` + `initrd.img` | `app/src/main/assets/` |
-| `rootfs` | `alpine-rootfs.squashfs` | `app/src/main/assets/alpine-rootfs.squashfs` |
+| `rootfs` | `debian-rootfs.squashfs` | `app/src/main/assets/debian-rootfs.squashfs` |
 | `qemu` | `libqemu-system-aarch64.so`, `libslirp.so`, `libpodroid-bridge.so`, `libpodroid-launcher.so` | `app/src/main/jniLibs/arm64-v8a/` |
 | `qemu` | `efi-virtio.rom`, keymaps | `app/src/main/assets/qemu/` |
 | `apk` | `app-debug.apk` | `app/build/outputs/apk/debug/` |
@@ -51,7 +51,7 @@ Component versions are pinned in one place each, so read the pin rather than tru
 |---|---|
 | Linux kernel | `podroidKernelVersion` in `gradle.properties` |
 | QEMU | `podroidQemuVersion` in `gradle.properties` |
-| Alpine | `ARG ALPINE_RELEASE` in `build-rootfs/Dockerfile.rootfs` |
+| Debian | `ARG DEBIAN_ARCH` in `build-rootfs/Dockerfile.rootfs` |
 
 **`kernel` and `initramfs` pass `docker build --network=host`; `qemu` and `rootfs` do not.** Both of those stages `apt-get`/`apk`/`curl` packages from inside the container, and on some hosts the default bridge network's DNS does not resolve there, which shows up as `apt-get`/`apk` saying a package "has no installation candidate", or a `curl`/`wget` step failing outright. If that happens, rerun the failing stage's `docker build` by hand with `--network=host` added (see `build_qemu`/`build_rootfs` in `build-all.sh` for the exact command to replicate) rather than assuming the package is gone upstream.
 
@@ -63,9 +63,9 @@ Or, for the common case where you only changed Kotlin / UI code:
 
 ## Customising the guest
 
-- **Add a package to the base image:** add it to the `apk add` list in `build-rootfs/build-rootfs.sh` (e.g. `mc`), then `./build-all.sh rootfs`. New packages land on the next VM boot with no reset, since the squashfs is a plain-overlay lower (see `CLAUDE.md`'s "VM migration / upgrades").
-- **OpenRC services:** live under `build-rootfs/files/etc/init.d/`, wired into the `default`/`boot` runlevels by direct symlinks at the end of `build-rootfs.sh` (the build host is x86_64 and can't `chroot` into the aarch64 rootfs to run `rc-update`).
-- **Swapping Alpine for another distro is not supported.** `init-podroid` (overlay + `switch_root`), the OpenRC runlevel wiring, and the musl-static cross-compiled helpers (`podroid-hostd`, `podroid-vsock-agent`, `podroid-overlay-normalize`) all assume an Alpine root. Moving to another distro would mean replacing the init system integration, the `apk`-based package step in `build-rootfs.sh`, and rebuilding those helpers against that distro's libc.
+- **Add a package to the base image:** add it to the `--include` list in `build-rootfs/Dockerfile.rootfs` (e.g. `mc`), then `./build-all.sh rootfs`. New packages land on the next VM boot with no reset, since the squashfs is a plain-overlay lower (see `CLAUDE.md`'s "VM migration / upgrades").
+- **systemd services:** live under `build-rootfs/files/etc/systemd/system/`, wired into `multi-user.target.wants` by direct symlinks at the end of `build-rootfs.sh` (the build host is x86_64 and can't `chroot` into the aarch64 rootfs to run `systemctl enable`).
+- **The guest is Debian 12 (Bookworm) with systemd.** `init-podroid` (overlay + `switch_root`), the systemd unit wiring, and the statically-compiled helpers (`podroid-hostd`, `podroid-vsock-agent`, `podroid-overlay-normalize`) all target a Debian root. To swap distros you would need to replace the init system integration, the `debootstrap`-based package step in `Dockerfile.rootfs`, and rebuild those helpers against the new distro's libc.
 
 ## Reporting bugs
 
@@ -165,12 +165,12 @@ Podroid/
 ├── Dockerfile                            Kernel + initramfs + QEMU build pipeline
 ├── build-tools/                          Static assets used during Docker builds
 │   └── cross-android-aarch64.ini         Meson cross-compilation config
-├── build-rootfs/                         Alpine squashfs build pipeline
+├── build-rootfs/                         Debian squashfs build pipeline
 │   ├── Dockerfile.rootfs
 │   ├── build-rootfs.sh
 │   ├── vsock-agent/                      AVF control/forward agent
 │   ├── host-bridge/                      guest to Android bridge daemon
-│   └── files/                            OpenRC services baked into the squashfs
+│   └── files/                            systemd services baked into the squashfs
 ├── build-all.sh                          Unified build / deploy script
 ├── podroid_kernel.config                 Custom kernel Kconfig fragment
 └── docs/                                 GitHub Pages site

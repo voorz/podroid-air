@@ -6,7 +6,7 @@
 
 **Run Linux containers and a full Linux desktop on your Android phone. No root.**
 
-A real Alpine Linux VM with its own kernel - not a chroot or proot trick - so **Podman, Docker and LXC** behave exactly like they do on a server.
+A real Debian 12 (Bookworm) Linux VM with its own kernel - not a chroot or proot trick - so **Podman, Docker and LXC** behave exactly like they do on a server.
 
 [![Release](https://img.shields.io/github/v/release/ExTV/Podroid?include_prereleases&style=flat-square&label=release&color=blue)](https://github.com/ExTV/Podroid/releases)
 [![Downloads](https://img.shields.io/github/downloads/ExTV/Podroid/total?style=flat-square&color=brightgreen)](https://github.com/ExTV/Podroid/releases)
@@ -21,7 +21,7 @@ A real Alpine Linux VM with its own kernel - not a chroot or proot trick - so **
   <tr>
     <td align="center" width="25%"><img src="docs/screenshots/01-home-idle.png" alt="Home screen before the VM starts" width="190" /><br /><sub><b>Home</b></sub></td>
     <td align="center" width="25%"><img src="docs/screenshots/02-home-running.png" alt="Home screen with the VM running and network info" width="190" /><br /><sub><b>Running</b></sub></td>
-    <td align="center" width="25%"><img src="docs/screenshots/03-terminal-fastfetch.png" alt="Built-in terminal showing Alpine system info" width="190" /><br /><sub><b>Terminal</b></sub></td>
+    <td align="center" width="25%"><img src="docs/screenshots/03-terminal-fastfetch.png" alt="Built-in terminal showing Debian system info" width="190" /><br /><sub><b>Terminal</b></sub></td>
     <td align="center" width="25%"><img src="docs/screenshots/04-quick-settings.png" alt="Terminal Quick Settings with themes and fonts" width="190" /><br /><sub><b>Themes &amp; fonts</b></sub></td>
   </tr>
 </table>
@@ -31,7 +31,7 @@ A real Alpine Linux VM with its own kernel - not a chroot or proot trick - so **
 ## What you get
 
 - **Podman, Docker and LXC** - pre-installed, ready the moment it boots
-- **A real VM** - Alpine Linux on a custom kernel via QEMU, or hardware-accelerated AVF on supported pKVM devices
+- **A real VM** - Debian 12 (Bookworm) on a custom kernel via QEMU, or hardware-accelerated AVF on supported pKVM devices
 - **In-app terminal** - full xterm-256color, 122 color themes, 13 fonts, live resize
 - **X11 desktop** - run GUI Linux apps in a built-in viewer with touch, keyboard, mouse and audio
 - **USB passthrough**, **SSH**, **port forwarding** and a **guest-to-Android bridge**
@@ -90,7 +90,7 @@ Contributions of every size are welcome: bug reports, kernel-config tweaks, new 
 |---|---|
 | [QEMU](https://www.qemu.org)                   | Machine emulation |
 | [Termux](https://github.com/termux/termux-app) | Terminal emulator engine |
-| [Alpine Linux](https://alpinelinux.org)        | The guest distribution |
+| [Debian](https://www.debian.org)             | The guest distribution |
 
 Full list in [CREDITS.md](CREDITS.md).
 

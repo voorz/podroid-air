@@ -923,7 +923,7 @@ class AvfEngine @Inject constructor(
      * Creates (or resizes) the persistent storage disk. Mirrors QemuEngine's
      * helper exactly so a VM can boot under either backend with the same
      * disk identity. The file is sparse — the actual disk allocation grows
-     * as the guest writes blocks. Alpine's init formats it ext4 on first
+     * as the guest writes blocks. The Debian init formats it ext4 on first
      * boot via the standard initramfs path.
      */
     private fun ensureStorageImage(storageSizeGb: Int): File {
@@ -1024,7 +1024,7 @@ class AvfEngine @Inject constructor(
             require(it.exists()) { "initrd missing at ${it.absolutePath}" }
         }
         val storage = ensureStorageImage(config.storageSizeGb)
-        val squashfs = File(context.filesDir, "alpine-rootfs.squashfs").also {
+        val squashfs = File(context.filesDir, "debian-rootfs.squashfs").also {
             require(it.exists()) { "rootfs missing at ${it.absolutePath}" }
         }
 
@@ -1043,7 +1043,7 @@ class AvfEngine @Inject constructor(
         // `podroid.tty=` marker.
         //
         // `podroid.backend=avf` is a stable backend identifier — used by
-        // guest OpenRC scripts (podroid-network, podroid-vsock) to pick
+        // guest systemd services (podroid-network, podroid-vsock) to pick
         // AVF-specific behaviour without coupling to the tty choice.
         //
         // `podroid.epoch=...` seeds the wall clock — AVF/crosvm doesn't

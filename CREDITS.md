@@ -17,11 +17,11 @@ Podroid ships a custom build of the upstream Linux kernel (currently 7.3) config
 - License: GNU General Public License v2.0
 - Maintainers: Linus Torvalds and the Linux kernel community
 
-### Alpine Linux
-The guest userspace is a slightly customized Alpine Linux 3.24 root filesystem.
+### Debian
+The guest userspace is a slightly customized Debian 12 (Bookworm) root filesystem.
 
-- Project: https://alpinelinux.org
-- License: per-package (see Alpine's individual package licenses)
+- Project: https://www.debian.org
+- License: per-package (see Debian's individual package licenses)
 
 ### Container runtimes
 The full rootless OCI stack ships pre-installed and pre-configured. Docker and LXC are bundled alongside Podman for users who prefer them.
@@ -41,10 +41,10 @@ The full rootless OCI stack ships pre-installed and pre-configured. Docker and L
 All maintained by the containers community; primarily Apache-2.0 / GPL-2.0 licensed.
 
 ### System & init
-- **busybox**: multi-call binary providing the initramfs userland and `/sbin/init` (https://busybox.net, GPL-2.0)
-- **OpenRC**: service manager running as PID 1 inside the VM (https://github.com/OpenRC/openrc, BSD-2-Clause)
-- **Dropbear SSH**: small SSH server (https://matt.ucc.asn.au/dropbear/dropbear.html, MIT-style)
-- **doas / sudo**: privilege escalation for `wheel`-group users (OpenBSD / https://www.sudo.ws)
+- **busybox**: multi-call binary providing the initramfs userland (https://busybox.net, GPL-2.0)
+- **systemd**: service manager running as PID 1 inside the VM (https://systemd.io, LGPL-2.1)
+- **OpenSSH**: SSH server (https://www.openssh.com, BSD-style)
+- **sudo**: privilege escalation for `sudo`-group users (https://www.sudo.ws)
 - **iproute2, iptables, nftables, bridge-utils**: networking utilities maintained by netfilter.org and the Linux community
 
 ### X11 desktop stack

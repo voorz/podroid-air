@@ -1,0 +1,17 @@
+# podroid-bootstrap.service
+# System bootstrap: cgroups v2, modules, devpts, sysctl, ZRAM, container dirs.
+[Unit]
+Description=Podroid VM system bootstrap (cgroups, modules, devpts, sysctl)
+DefaultDependencies=no
+After=local-fs.target podroid-migrate.service
+Before=podroid-network.service podroid-x11.service podroid-hostd.service podroid-vsock.service podroid-resize.service podroid-downloads.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/podroid-bootstrap
+RemainAfterExit=yes
+StandardOutput=console
+StandardError=console
+
+[Install]
+WantedBy=multi-user.target

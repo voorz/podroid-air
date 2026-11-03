@@ -1,0 +1,18 @@
+# podroid-network.service
+# Configures the VM network interface (SLIRP static or DHCP via AVF).
+[Unit]
+Description=Podroid VM networking
+After=podroid-bootstrap.service
+Before=podroid-ready.service
+After=network-pre.target
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/podroid-network
+RemainAfterExit=yes
+StandardOutput=console
+StandardError=console
+
+[Install]
+WantedBy=multi-user.target

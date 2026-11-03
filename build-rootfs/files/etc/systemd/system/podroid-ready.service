@@ -1,0 +1,16 @@
+# podroid-ready.service
+# Emits boot-stage markers ("Starting SSH...", "Almost ready...", "Ready!")
+# that the Android BootStageDetector scans for. Runs last.
+[Unit]
+Description=Podroid VM ready marker (consumed by Android boot detector)
+After=podroid-network.service podroid-resize.service podroid-x11.service podroid-hostd.service podroid-vsock.service podroid-downloads.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/podroid-ready
+RemainAfterExit=yes
+StandardOutput=console
+StandardError=console
+
+[Install]
+WantedBy=multi-user.target

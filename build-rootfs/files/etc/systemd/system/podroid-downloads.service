@@ -1,0 +1,18 @@
+# podroid-downloads.service
+# AVF Downloads share (9p over vsock, AVF only).
+[Unit]
+Description=Podroid AVF Downloads share (9p over vsock)
+After=podroid-bootstrap.service podroid-network.service podroid-vsock.service
+Before=podroid-ready.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/podroid-downloads-start
+ExecStop=/usr/local/bin/podroid-downloads-stop
+PIDFile=/run/podroid-downloads.pid
+RemainAfterExit=yes
+StandardOutput=console
+StandardError=console
+
+[Install]
+WantedBy=multi-user.target

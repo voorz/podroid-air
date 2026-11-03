@@ -581,7 +581,7 @@ private fun AboutSection(
     PodroidListRow(label = stringResource(R.string.version_label), value = "v${BuildConfig.VERSION_NAME}", mono = true)
     PodroidListRow(label = stringResource(R.string.qemu_label), value = "v${BuildConfig.QEMU_VERSION}", mono = true)
     PodroidListRow(label = stringResource(R.string.architecture), value = "AArch64", mono = true)
-    PodroidListRow(label = stringResource(R.string.linux_distro), value = "Alpine 3.24", mono = true)
+    PodroidListRow(label = stringResource(R.string.linux_distro), value = "Debian 12 (Bookworm)", mono = true)
     Spacer(Modifier.height(PodroidTokens.Spacing.MD))
     val uriHandler = LocalUriHandler.current
     PodroidGhostButton(

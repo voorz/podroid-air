@@ -1,0 +1,18 @@
+# podroid-x11.service
+# X11 server (Xvnc + pulseaudio) for the in-app GUI viewer.
+[Unit]
+Description=Podroid X11 server (Xvnc + pulseaudio)
+After=podroid-bootstrap.service podroid-network.service
+Before=podroid-ready.service
+
+[Service]
+Type=forking
+ExecStart=/usr/local/bin/podroid-x11 start
+ExecStop=/usr/local/bin/podroid-x11 stop
+PIDFile=/run/xvnc.pid
+RemainAfterExit=yes
+StandardOutput=console
+StandardError=console
+
+[Install]
+WantedBy=multi-user.target

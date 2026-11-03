@@ -1,0 +1,16 @@
+#!/bin/sh
+# Podroid vsock agent startup wrapper (AVF only).
+# Invoked by podroid-vsock.service (systemd).
+set -eu
+
+# AVF-only: QEMU's kernel has no AF_VSOCK, so the agent would just fail to bind.
+# Skip cleanly if not an AVF boot.
+if ! grep -q 'podroid\.backend=avf' /proc/cmdline 2>/dev/null; then
+    echo "Not an AVF boot — skipping podroid-vsock" > /dev/console
+    # Signal systemd to not restart us
+    systemctl mask podroid-vsock.service 2>/dev/null || true
+    exit 0
+fi
+
+echo "Starting podroid-vsock-agent" > /dev/console
+exec /usr/local/bin/podroid-vsock-agent
