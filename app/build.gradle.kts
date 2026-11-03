@@ -67,17 +67,6 @@ android {
         }
     }
 
-    // Rename output APK to Podroid-v{versionName}-{buildType}.apk
-    androidComponents {
-        onVariants { variant ->
-            variant.outputs.forEach { output ->
-                val versionName = variant.versionName.orNull ?: "unknown"
-                val buildType = variant.buildType ?: "unknown"
-                output.outputFileName.set("Podroid-v${versionName}-${buildType}.apk")
-            }
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
