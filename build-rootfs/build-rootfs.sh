@@ -167,6 +167,30 @@ cat > "$ROOTFS/etc/hosts" <<'EOF'
 ::1 localhost ip6-localhost
 EOF
 
+# ── Machine ID ───────────────────────────────────────────────────────────
+# systemd needs /etc/machine-id to exist (even if empty, it will generate
+# one at boot). Without it, systemd may fail to start certain services.
+# debootstrap in Docker may skip the dbus postinst that normally creates this.
+if [ ! -f "$ROOTFS/etc/machine-id" ] || [ ! -s "$ROOTFS/etc/machine-id" ]; then
+    # Write a deterministic machine-id from /etc/hostname so it's stable across
+    # builds but unique per device (systemd will regenerate on first boot if
+    # this is empty — but an empty file in a read-only squashfs can't be written
+    # to, so we pre-populate it).
+    if command -v systemd-machine-id-setup >/dev/null 2>&1; then
+        systemd-machine-id-setup --root="$ROOTFS" 2>/dev/null || true
+    fi
+    if [ ! -s "$ROOTFS/etc/machine-id" ]; then
+        # Fall back: generate a random 32-char hex string (systemd format)
+        printf '%s\n' "$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')" \
+            > "$ROOTFS/etc/machine-id" 2>/dev/null || true
+    fi
+fi
+
+# ── Default target ────────────────────────────────────────────────────────
+# Ensure multi-user.target is the default boot target (not graphical.target).
+ln -sf /lib/systemd/system/multi-user.target \
+    "$ROOTFS/etc/systemd/system/default.target"
+
 # ── Login banner ─────────────────────────────────────────────────────────
 cat > "$ROOTFS/etc/issue" <<'EOF'
 Welcome to Podroid (Debian 12 Bookworm)
